@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>dialogsend</class>
+ <widget class="QDialog" name="dialogsend">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>545</width>
+    <height>356</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>群发管理</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>省份：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="edtTags"/>
+     </item>
+     <item row="2" column="3">
+      <widget class="QLineEdit" name="edtRemark"/>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>城市：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="edtSex"/>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>备注：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>标签：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>性别：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="edtProv"/>
+     </item>
+     <item row="5" column="2" colspan="2">
+      <widget class="QPushButton" name="btnSearch">
+       <property name="text">
+        <string>查找过滤</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLineEdit" name="edtCity"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>类型：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="edtType"/>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>名字：</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="3">
+      <widget class="QLineEdit" name="edtName"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>发送文本：</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="cbPrefix">
+         <property name="text">
+          <string>使用称呼(文本里用%s代替)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTextEdit" name="edtMsg">
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;%s你好，这是一条测试信息&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>发送图像：</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="edtPic"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnBrowse">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="2" rowspan="2">
+      <widget class="QPushButton" name="btnStartWechat">
+       <property name="text">
+        <string>启动微信</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" rowspan="4">
+      <widget class="QTextBrowser" name="txtLog"/>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="btnStartSend">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>开始发送</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="btnUpdateContacts">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>更新通讯录</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>edtProv</tabstop>
+  <tabstop>edtCity</tabstop>
+  <tabstop>edtSex</tabstop>
+  <tabstop>edtRemark</tabstop>
+  <tabstop>edtType</tabstop>
+  <tabstop>edtName</tabstop>
+  <tabstop>edtTags</tabstop>
+  <tabstop>btnSearch</tabstop>
+  <tabstop>cbPrefix</tabstop>
+  <tabstop>edtMsg</tabstop>
+  <tabstop>edtPic</tabstop>
+  <tabstop>btnBrowse</tabstop>
+  <tabstop>txtLog</tabstop>
+  <tabstop>btnStartWechat</tabstop>
+  <tabstop>btnStartSend</tabstop>
+  <tabstop>btnUpdateContacts</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
