@@ -1,61 +1,146 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QDialog
+from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
 from mainwindow import Ui_MainWindow
 from dialogsend_imp import dialogsend_imp
-from newWxBot import *
-
-def initializeModel(model):
-    model.setTable('contacts')
-    model.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
-    model.select()
-    """
-    model.setHeaderData(0, QtCore.Qt.Horizontal, "NickName")
-    model.setHeaderData(1, QtCore.Qt.Horizontal, "Alias")
-    model.setHeaderData(2, QtCore.Qt.Horizontal, "Prefix")
-    """
+from dialogtoolbox_imp import dialogtoolbox_imp
+from wxHelper import *
 
 class mainwindow_imp(Ui_MainWindow, QMainWindow):
     def __init__(self):
         super(mainwindow_imp, self).__init__()
 #        self.model = QtSql.QSqlTableModel()
         self.jobd = {}
+        self.count = 0
+        self.wxInst = itchat.new_instance()
+        self.wxHelper = wxHelper(self.wxInst)
 
     def setupUi(self, MainWindow):
-        super(mainwindow_imp, self).setupUi(MainWindow)
-        tt = QtWidgets.QDialog(MainWindow)
-        self.dialogsend_imp = dialogsend_imp()
-        self.dialogsend_imp.setupUi(tt)
-        self.dialogsend_imp.btnSearch.clicked.connect(self.search)
-        self.dialogsend_imp.btnUpdateContacts.clicked.connect(self.search)
+        super(mainwindow_imp, self).setupUi(self)
+        self.dialogtoolbox_imp = dialogtoolbox_imp(self)
+        self.dialogtoolbox_imp.setupUi()
+        self.dialogtoolbox_imp.btnSearch.clicked.connect(self.btnSearchClicked)
+        self.dialogtoolbox_imp.btnInvalid.clicked.connect(self.btnInvalidClicked)
+        self.dialogtoolbox_imp.btnNoremark.clicked.connect(self.btnNoremarkClicked)
+        self.dialogtoolbox_imp.btnNotags.clicked.connect(self.btnNotagsClicked)
+
+        self.actionStart.triggered.connect(self.triggerStartWx)
+        self.actionStop.triggered.connect(self.triggerStopWx)
+        self.actionSend.triggered.connect(self.triggerSend)
+        self.actionupdatefromwx.triggered.connect(self.triggerUpdatefromwx)
+        self.actionBatchSend.triggered.connect(self.triggerBatchSendStart)
+        self.actionStopBatch.triggered.connect(self.triggerBatchSendStop)
+        self.actionRemoveSelected.triggered.connect(self.triggerRemoveSelected)
+        # self.dialogsend_imp.btnUpdateContacts.clicked.connect(self.search)
         # self.options_imp.btnSearch.clicked.connect(self.search)
         # self.btnBatchSend.clicked.connect(self.sendclicked)
         # self.options_imp.show()
-        tt.show()
+        self.dialogtoolbox_imp.show()
 
         db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
         db.setDatabaseName('wechat.db')
         self.model = QtSql.QSqlTableModel()
-        initializeModel(self.model)
+        self.init_model()
         self.tableView.setModel(self.model)
+        self.tableView.hideColumn(1)
+        self.tableView.hideColumn(6)
         while self.model.canFetchMore(): self.model.fetchMore()
-        xx = "%d rows in total" % self.model.rowCount()
+        self.count = self.model.rowCount()
+        xx = "%d rows in total" % self.count
         self.lbMsg.setText(xx)
 
-    def sendclicked(self):
-        tt = QtWidgets.QDialog()
-        uu = dialogsend_imp()
-        uu.setupUi(tt)
-        tt.setModal(True)
-        tt.exec_()
+    def closeEvent(self, event):
+        self.triggerBatchSendStop()
+        self.triggerStopWx()
+        event.accept()
 
-    def search(self):
-        cond = make_cond_from_json(JOBFILE)
-        # logging.info(cond)
+    def dofilter(self, cond):
         self.model.setFilter(cond)
         while self.model.canFetchMore(): self.model.fetchMore()
-        xx = "%d rows in total" % self.model.rowCount()
+        self.count = self.model.rowCount()
+        xx = "%d rows in total" % self.count
         self.lbMsg.setText(xx)
-        #print(cond)
+        # print(cond)
         # Connect up the buttons.
-    #    self.btnClose.clicked.connect()
+        #    self.btnClose.clicked.connect()
+    def btnSearchClicked(self):
+        cond = make_cond_from_dict(self.dialogtoolbox_imp.jobd)
+        self.dofilter(cond)
+
+    def btnInvalidClicked(self):
+        cond = "up2date=0"
+        self.dofilter(cond)
+
+    def btnNoremarkClicked(self):
+        cond = "alias='' and (remark is NULL or length(remark)=0)"
+        self.dofilter(cond)
+
+    def btnNotagsClicked(self):
+        cond = "tags is NULL or length(tags)=0"
+        self.dofilter(cond)
+
+    def triggerStartWx(self):
+        self.wxInst.auto_login(hotReload=True)
+        self.wxInst.run(blockThread=False)
+
+    def triggerStopWx(self):
+        self.wxInst.logout()
+        self.wxInst.dump_login_status()
+
+    def triggerBatchSendStart(self):
+        self.wxHelper.start_batchsend()
+
+    def triggerBatchSendStop(self):
+        self.wxHelper.stop_batchsend()
+
+    def triggerSend(self):
+        if self.wxHelper.jobInQueue():
+            QMessageBox.information(self, "提示", "队列中已经有任务正在发送，请确认批量发送已经启动并稍后再试", QMessageBox.Ok)
+            return
+
+        dlg = dialogsend_imp(self)
+        dlg.setupUi()
+        dlg.lblCount.setText(str(self.count))
+        dlg.exec()
+        if dlg.result()==QDialog.Accepted:
+            dd = dict(dlg.jobd, **self.dialogtoolbox_imp.jobd)
+            with open('job.txt', 'w') as f:
+                f.write(json.dumps(dd, ensure_ascii=False))
+
+    def triggerUpdatefromwx(self):
+        if self.wxInst.alive:
+            nn = self.wxHelper.saveContact()
+            logging.info("本次新增联系人： %d" % nn)
+
+    def triggerRemoveSelected(self):
+        selected = self.tableView.selectedIndexes()
+        for i in selected:
+            self.model.removeRow(i.row())
+
+    def before_update(self, row, record):
+        if self.wxInst.alive:
+            nickname = record.value('nickname')
+            alias = record.value('alias')
+            usr = self.wxInst.search_friends(wechatAccount=alias, nickName=nickname)
+            if usr is not None:
+                remark = usr[0]['RemarkName']
+                if remark != record.value('remark'):
+                    uid = usr[0]['UserName']
+                    self.wxInst.set_alias(uid, record.value('remark'))
+        # logging.debug(record.value('mobile'))
+
+    def init_model(self):
+        self.model.setTable('contacts')
+        self.model.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
+        self.model.beforeUpdate.connect(self.before_update)
+
+        headers = ['微信名', '标识', '性别', '省', '市', '微信ID', 'sns', '称呼', '标签', '类型', '微信备注', '更新状态', '手机号', '备注']
+        for i in range(len(headers)):
+            self.model.setHeaderData(i, QtCore.Qt.Horizontal, headers[i])
+        self.model.select()
+
+"""DB related
+"""
+
+
+
+

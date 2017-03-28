@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
-    <height>600</height>
+    <width>1280</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>N8微信通讯录管理</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -20,58 +20,117 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
-      <item row="2" column="1" colspan="3">
+      <item row="0" column="1" colspan="5">
+       <widget class="QTableView" name="tableView"/>
+      </item>
+      <item row="2" column="1" colspan="4">
        <widget class="QLabel" name="lbMsg">
         <property name="text">
          <string>TextLabel</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="4">
-       <widget class="QLabel" name="label">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>只可以修改tags标签和prefix称谓</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="5">
-       <widget class="QPushButton" name="btnClose">
-        <property name="text">
-         <string>退出</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" colspan="5">
-       <widget class="QTableView" name="tableView"/>
-      </item>
      </layout>
     </item>
    </layout>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSend"/>
+   <addaction name="separator"/>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1280</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>微信操作</string>
+    </property>
+    <addaction name="actionStart"/>
+    <addaction name="actionStop"/>
+    <addaction name="separator"/>
+    <addaction name="actionBatchSend"/>
+    <addaction name="actionStopBatch"/>
+    <addaction name="separator"/>
+    <addaction name="actionSend"/>
+    <addaction name="separator"/>
+    <addaction name="actionQUIT"/>
+   </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionQUIT"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>通讯录操作</string>
+    </property>
+    <addaction name="actionupdatefromwx"/>
+    <addaction name="actionRemoveSelected"/>
+   </widget>
+   <addaction name="menu_2"/>
+   <addaction name="menu"/>
+   <addaction name="menu_3"/>
+  </widget>
+  <action name="actionStart">
+   <property name="text">
+    <string>启动微信</string>
+   </property>
+   <property name="iconText">
+    <string>启动微信</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>停止微信</string>
+   </property>
+  </action>
+  <action name="actionBatchSend">
+   <property name="text">
+    <string>启动批量发送</string>
+   </property>
+  </action>
+  <action name="actionStopBatch">
+   <property name="text">
+    <string>停止批量发送</string>
+   </property>
+  </action>
+  <action name="actionQUIT">
+   <property name="text">
+    <string>退出系统</string>
+   </property>
+  </action>
+  <action name="actionSend">
+   <property name="text">
+    <string>发送消息</string>
+   </property>
+  </action>
+  <action name="actionupdatefromwx">
+   <property name="text">
+    <string>从微信更新</string>
+   </property>
+  </action>
+  <action name="actionRemoveSelected">
+   <property name="text">
+    <string>删除选中项</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>btnClose</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>627</x>
-     <y>392</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>337</x>
-     <y>217</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

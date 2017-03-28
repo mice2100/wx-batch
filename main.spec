@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['C:\\Users\\George\\AppData\\Local\\Programs\\Python\\Python35-32\\Lib\\site-packages\\PyQt5\\Qt\\bin', 'C:\\Users\\George\\Documents\\code\\dlls', 'C:\\Users\\George\\Documents\\code\\wx-batch'],
+             pathex=['C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python35-32\\Lib\\site-packages\\PyQt5\\Qt\\bin', 'Z:\\wx-batch'],
              binaries=[],
              datas=[],
              hiddenimports=[],

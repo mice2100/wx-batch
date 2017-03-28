@@ -18,7 +18,7 @@ from requests.exceptions import ConnectionError, ReadTimeout
 import logging
 
 if sys.version_info[0] == 3:
-    from html import parser as HTMLParser
+    import html
     from urllib.parse import urlencode
     unicode = str
 else:
@@ -99,7 +99,7 @@ class WXBot:
         self.full_user_name_list = []    #直接获取不到通讯录时，获取的username列表
         self.wxid_list = []   #获取到的wxid的列表
         self.cursor = 0   #拉取联系人信息的游标
-        self.is_big_contact = False  #通讯录人数过多，无法直接获取
+        self.is_big_contact = True  #通讯录人数过多，无法直接获取
         #文件缓存目录
         self.temp_pwd  =  os.path.join(os.getcwd(),'temp')
         if os.path.exists(self.temp_pwd) == False:
@@ -161,8 +161,8 @@ class WXBot:
 
     def get_contact(self):
         """获取当前账户的所有相关账号(包括联系人、公众号、群聊、特殊账号)"""
-        if self.is_big_contact:
-            return False
+        # if self.is_big_contact:
+        #     return False
         url = self.base_uri + '/webwxgetcontact?pass_ticket=%s&skey=%s&r=%s' \
                               % (self.pass_ticket, self.skey, int(time.time()))
 
@@ -239,13 +239,14 @@ class WXBot:
         total_len = len(self.full_user_name_list)
         user_info_list = []
 
+        logging.debug('More contacts to get: %d' % total_len)
         #一次拉取50个联系人的信息，包括所有的群聊，公众号，好友
         while self.cursor < total_len:
             cur_batch = self.full_user_name_list[self.cursor:(self.cursor+self.batch_count)]
             self.cursor += self.batch_count
-            cur_batch = map(map_username_batch, cur_batch)
+            cur_batch = list(map(map_username_batch, cur_batch))
             user_info_list += self.batch_get_contact(cur_batch)
-            logging.info("[INFO] Get batch contacts")
+            logging.info("[INFO] Getting more contacts")
 
         self.member_list = user_info_list
         special_users = ['newsapp', 'filehelper', 'weibo', 'qqmail',
@@ -257,10 +258,10 @@ class WXBot:
                  'officialaccounts',
                  'gh_22b87fa7cb3c', 'wxitil', 'userexperience_alarm', 'notification_messages', 'notifymessage']
 
-        self.contact_list = []
-        self.public_list = []
-        self.special_list = []
-        self.group_list = []
+        # self.contact_list = []
+        # self.public_list = []
+        # self.special_list = []
+        # self.group_list = []
         for i, contact in enumerate(self.member_list):
             if contact['VerifyFlag'] & 8 != 0:  # 公众号
                 self.public_list.append(contact)
@@ -307,7 +308,8 @@ class WXBot:
                 f.write(json.dumps(self.group_members))
             with open(os.path.join(self.temp_pwd,'account_info.json'), 'w') as f:
                 f.write(json.dumps(self.account_info))
-        logging.info('[INFO] Get %d contacts' % len(self.contact_list))
+        logging.info('[INFO] Got %d contacts, %d groups, %d public IDs, %d special IDs.' % (
+            len(self.contact_list), len(self.group_list), len(self.public_list), len(self.special_list)))
         logging.info('[INFO] Start to process messages .')
         return True
 
@@ -698,14 +700,14 @@ class WXBot:
                 msg_type_id = 0
                 user['name'] = 'system'
                 #会获取所有联系人的username 和 wxid，但是会收到3次这个消息，只取第一次
-                if self.is_big_contact and len(self.full_user_name_list) == 0:
+                if self.is_big_contact:
                     self.full_user_name_list = msg['StatusNotifyUserName'].split(",")
                     self.wxid_list = re.search(r"username&gt;(.*?)&lt;/username", msg["Content"]).group(1).split(",")
                     with open(os.path.join(self.temp_pwd,'UserName.txt'), 'w') as f:
                         f.write(msg['StatusNotifyUserName'])
                     with open(os.path.join(self.temp_pwd,'wxid.txt'), 'w') as f:
                         f.write(json.dumps(self.wxid_list))
-                    logging.info("[INFO] Contact list is too big. Now start to fetch member list .")
+                    logging.info("[INFO] Contact list is too big. Now start to fetch more ...")
                     self.get_big_contact()
 
             elif msg['MsgType'] == 37:  # friend request
@@ -742,7 +744,7 @@ class WXBot:
                 user['name'] = 'unknown'
             if not user['name']:
                 user['name'] = 'unknown'
-            user['name'] = HTMLParser.HTMLParser().unescape(user['name'])
+            user['name'] = html.unescape(user['name'])
 
             if self.DEBUG and msg_type_id != 0:
                 logging.debug(u'[MSG] %s:' % user['name'])

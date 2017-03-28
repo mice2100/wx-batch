@@ -9,9 +9,8 @@ if __name__ == "__main__":
     if not os.path.exists('wechat.db'):
         shutil.copyfile('wechat_em.db', 'wechat.db')
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = mainwindow_imp()
-    ui.setupUi(MainWindow)
+    MainWindow = mainwindow_imp()
+    MainWindow.setupUi(MainWindow)
 
-    MainWindow.show()
+    MainWindow.showMaximized()
     sys.exit(app.exec_())
