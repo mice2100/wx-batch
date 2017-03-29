@@ -3,16 +3,19 @@ from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
 from mainwindow import Ui_MainWindow
 from dialogsend_imp import dialogsend_imp
 from dialogtoolbox_imp import dialogtoolbox_imp
+from dlggroupmgr_imp import dlggroupmgr_imp
 from wxHelper import *
 
 class mainwindow_imp(Ui_MainWindow, QMainWindow):
-    def __init__(self):
+    def __init__(self, wxinst, wxhelper):
         super(mainwindow_imp, self).__init__()
 #        self.model = QtSql.QSqlTableModel()
         self.jobd = {}
         self.count = 0
-        self.wxInst = itchat.new_instance()
-        self.wxHelper = wxHelper(self.wxInst)
+        self.wxInst = wxinst
+        self.wxHelper = wxhelper
+        # self.wxInst = itchat.new_instance()
+        # self.wxHelper = wxHelper(self.wxInst)
 
     def setupUi(self, MainWindow):
         super(mainwindow_imp, self).setupUi(self)
@@ -30,6 +33,8 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.actionBatchSend.triggered.connect(self.triggerBatchSendStart)
         self.actionStopBatch.triggered.connect(self.triggerBatchSendStop)
         self.actionRemoveSelected.triggered.connect(self.triggerRemoveSelected)
+        self.actionQuit.triggered.connect(self.close)
+        self.actionGroupMgr.triggered.connect(self.triggerGroupManager)
         # self.dialogsend_imp.btnUpdateContacts.clicked.connect(self.search)
         # self.options_imp.btnSearch.clicked.connect(self.search)
         # self.btnBatchSend.clicked.connect(self.sendclicked)
@@ -37,7 +42,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.dialogtoolbox_imp.show()
 
         db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
-        db.setDatabaseName('wechat.db')
+        db.setDatabaseName(self.wxHelper.DBFILE)
         self.model = QtSql.QSqlTableModel()
         self.init_model()
         self.tableView.setModel(self.model)
@@ -79,10 +84,12 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.dofilter(cond)
 
     def triggerStartWx(self):
+        if self.wxInst.alive: return
         self.wxInst.auto_login(hotReload=True)
         self.wxInst.run(blockThread=False)
 
     def triggerStopWx(self):
+        if not self.wxInst.alive: return
         self.wxInst.logout()
         self.wxInst.dump_login_status()
 
@@ -103,21 +110,39 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         dlg.exec()
         if dlg.result()==QDialog.Accepted:
             dd = dict(dlg.jobd, **self.dialogtoolbox_imp.jobd)
-            with open('job.txt', 'w') as f:
+            with open(self.wxHelper.JOBFILE, 'w') as f:
                 f.write(json.dumps(dd, ensure_ascii=False))
 
     def triggerUpdatefromwx(self):
         if self.wxInst.alive:
             nn = self.wxHelper.saveContact()
             logging.info("本次新增联系人： %d" % nn)
+            self.btnSearchClicked()
 
     def triggerRemoveSelected(self):
         selected = self.tableView.selectedIndexes()
         for i in selected:
             self.model.removeRow(i.row())
+        self.btnSearchClicked()
+
+    def triggerGroupManager(self):
+        selected = self.tableView.currentIndex().row()
+        tp = self.model.record(selected).field('tp').value()
+        if tp!= 1: return
+        groupname = self.model.record(selected).field('NickName').value()
+        [cnt_friend, cnt_unknown] = self.wxHelper.get_group_members_into_memdb(groupname)
+        dlg = dlggroupmgr_imp(self)
+        dlg.cnt_friend = cnt_friend
+        dlg.cnt_unknown = cnt_unknown
+        dlg.groupname = groupname
+        dlg.setupUi()
+        dlg.wxInst = self.wxInst
+        dlg.wxHelper = self.wxHelper
+        dlg.exec()
 
     def before_update(self, row, record):
         if self.wxInst.alive:
+            if record.value('tp') != 0: return
             nickname = record.value('nickname')
             alias = record.value('alias')
             usr = self.wxInst.search_friends(wechatAccount=alias, nickName=nickname)

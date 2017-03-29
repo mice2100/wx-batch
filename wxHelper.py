@@ -4,7 +4,7 @@ import itchat
 import logging.config
 import threading
 import os
-import json
+import json, sqlite3
 import time
 
 
@@ -50,6 +50,7 @@ class wxHelper:
         self.event_add_friend = threading.Event()
         self.add_friend_cnt = 5
         self.thread_add_friend = None
+        self.DBFILE = ''
 
 
     def start_batchsend(self):
@@ -72,8 +73,7 @@ class wxHelper:
         if len(cond)>0: SQL = SQL + ' where '+cond
         # logging.debug(SQL)
 
-        import sqlite3
-        con = sqlite3.connect("wechat.db")
+        con = sqlite3.connect(self.DBFILE)
         cur = con.cursor()
         cur.execute(SQL)
 
@@ -128,6 +128,41 @@ class wxHelper:
             self.thread_send.join(10)
             self.thread_send = None
 
+    def get_group_members_into_memdb(self, groupname):
+        if not self.chat.alive:
+            return
+
+        con = sqlite3.connect(self.DBFILE)
+        cur = con.cursor()
+        SQL = "drop table if exists groupmember"
+        cur.execute(SQL)
+        SQL = "create table groupmember(username TEXT(65), nickname TEXT(256), isfriend INTEGER default(0))"
+        cur.execute(SQL)
+
+        cnt_friend = cnt_unknown = 0
+
+        group = self.chat.search_chatrooms(name=groupname)
+        if len(group)>0:
+            members = self.chat.update_chatroom(userName=group[0]['UserName'])
+            # logging.info('Total members: %d', len(members['MemberList']))
+            for xx in members['MemberList']:
+                friend = self.chat.search_friends(userName=xx['UserName'])
+                isfriend = 1
+                if friend is None or len(friend)==0:
+                    isfriend = 0
+                    cnt_unknown += 1
+                else:
+                    isfriend = 1
+                    cnt_friend += 1
+                    # logging.debug("To add: %s" % xx['NickName'])
+                SQL = "insert into groupmember (username, nickname, isfriend) values('%s', '%s', %d)" %(
+                    xx['UserName'], xx['NickName'], isfriend )
+                cur.execute(SQL)
+        con.commit()
+        con.close()
+
+        return [cnt_friend, cnt_unknown]
+
     def add_group_friends(self, groupname, strhello):
         if not self.chat.alive:
             return
@@ -155,6 +190,44 @@ class wxHelper:
             self.thread_add_friend.join(10)
             self.thread_add_friend = None
 
+    def tag_usernames(self, usernames, tag):
+        con = sqlite3.connect(self.DBFILE)
+        cur = con.cursor()
+        SQL = ""
+        try:
+            for uname in usernames:
+                usr = self.chat.search_friends(userName=uname)
+                if usr is not None:
+                    nickname = usr['NickName']
+                    alias = usr['Alias']
+                    remark = usr['RemarkName']
+
+                    SQL = "select tags from contacts where nickname=? and alias=? and remark=?"
+                    param = [nickname, alias, remark]
+                    cur.execute(SQL, param)
+                    rec = cur.fetchone()
+                    if rec is not None:
+                        exist = False
+                        tags = []
+                        if rec[0] is not None:
+                            tags = rec[0].split(';')
+                            for tt in tags:
+                                if tt==tag:
+                                    exist = True
+                                    break
+                        if not exist:
+                            tags.append(tag)
+                            strtags = ';'.join(tags)
+                            SQL = "update contacts set tags=? where nickname=? and alias=? and remark=?"
+                            param = [strtags, nickname, alias, remark]
+                            cur.execute(SQL, param)
+                            con.commit()
+        except Exception as e:
+            logging.info(e)
+        finally:
+            con.close()
+
+
     def add_friends_proc(self):
         signaled = False
         while True:
@@ -177,7 +250,7 @@ class wxHelper:
     def saveContact(self):
         tp = [self.chat.get_friends(), self.chat.get_chatrooms(), self.chat.get_mps()]
         import sqlite3
-        con = sqlite3.connect("wechat.db")
+        con = sqlite3.connect(self.DBFILE)
         cur = con.cursor()
         cur.execute("UPDATE contacts set up2date=0")
         inserted = 0
