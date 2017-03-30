@@ -1,0 +1,8 @@
+dist/
+build/
+wxBot/
+__pycache__/
+.idea/
+temp/
+*.zip
+
