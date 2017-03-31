@@ -5,7 +5,7 @@ import logging.config
 import threading
 import os
 import json, sqlite3
-import time
+import time, re
 
 
 def make_cond_from_dict(dict):
@@ -90,15 +90,25 @@ class wxHelper:
         while not self.event_send.wait(2):
             [jobd, selector] = self.checkJobs()
             if jobd is None: continue
-            MSG = jobd.get('msg') if jobd.get('msg') is not None else ""
-            PIC = jobd.get('pic') if jobd.get('pic') is not None else ""
+            MSG = jobd.get('msg') if jobd.get('msg') else ""
+            PIC = jobd.get('pic') if jobd.get('pic') else ""
+            PIC2 = jobd.get('pic_2') if jobd.get('pic_2') else ""
+            PIC3 = jobd.get('pic_3') if jobd.get('pic_3') else ""
             PREFIX = jobd.get('prefix')
             media_id = ""
+            media_id2 = ""
+            media_id3 = ""
             # logging.debug("%s, %s", MSG, PIC)
             import os
             if len(PIC) > 0 and os.path.exists(PIC):
                 media = self.chat.upload_file(PIC, isPicture=True)
                 media_id = media['MediaId']
+            if len(PIC2) > 0 and os.path.exists(PIC2):
+                media = self.chat.upload_file(PIC2, isPicture=True)
+                media_id2 = media['MediaId']
+            if len(PIC3) > 0 and os.path.exists(PIC3):
+                media = self.chat.upload_file(PIC3, isPicture=True)
+                media_id3 = media['MediaId']
 
             for row in selector:
                 lastCheckTs = time.time()
@@ -117,6 +127,12 @@ class wxHelper:
                 if len(media_id) > 0:
                     logging.info("Sending image %s", PIC)
                     self.chat.send_image(toUserName=uid, mediaId=media_id, fileDir=PIC)
+                if len(media_id2) > 0:
+                    logging.info("Sending image %s", PIC2)
+                    self.chat.send_image(toUserName=uid, mediaId=media_id2, fileDir=PIC2)
+                if len(media_id3) > 0:
+                    logging.info("Sending image %s", PIC3)
+                    self.chat.send_image(toUserName=uid, mediaId=media_id3, fileDir=PIC3)
 
                 if (time.time() - lastCheckTs) <= 2:
                     time.sleep(2-time.time()+lastCheckTs)
@@ -132,36 +148,39 @@ class wxHelper:
         if not self.chat.alive:
             return
 
-        con = sqlite3.connect(self.DBFILE)
-        cur = con.cursor()
-        SQL = "drop table if exists groupmember"
-        cur.execute(SQL)
-        SQL = "create table groupmember(username TEXT(65), nickname TEXT(256), isfriend INTEGER default(0))"
-        cur.execute(SQL)
+        try:
+            con = sqlite3.connect(self.DBFILE)
+            cur = con.cursor()
+            SQL = "drop table if exists groupmember"
+            cur.execute(SQL)
+            SQL = "create table groupmember(username TEXT(65), nickname TEXT(256), isfriend INTEGER default(0))"
+            cur.execute(SQL)
 
-        cnt_friend = cnt_unknown = 0
+            cnt_friend = cnt_unknown = 0
 
-        group = self.chat.search_chatrooms(name=groupname)
-        if len(group)>0:
-            members = self.chat.update_chatroom(userName=group[0]['UserName'])
-            # logging.info('Total members: %d', len(members['MemberList']))
-            for xx in members['MemberList']:
-                friend = self.chat.search_friends(userName=xx['UserName'])
-                isfriend = 1
-                if friend is None or len(friend)==0:
-                    isfriend = 0
-                    cnt_unknown += 1
-                else:
+            group = self.chat.search_chatrooms(name=groupname)
+            if len(group)>0:
+                members = self.chat.update_chatroom(userName=group[0]['UserName'])
+                # logging.info('Total members: %d', len(members['MemberList']))
+                for xx in members['MemberList']:
+                    friend = self.chat.search_friends(userName=xx['UserName'])
                     isfriend = 1
-                    cnt_friend += 1
-                    # logging.debug("To add: %s" % xx['NickName'])
-                SQL = "insert into groupmember (username, nickname, isfriend) values('%s', '%s', %d)" %(
-                    xx['UserName'], xx['NickName'], isfriend )
-                cur.execute(SQL)
-        con.commit()
-        con.close()
-
-        return [cnt_friend, cnt_unknown]
+                    if friend is None or len(friend)==0:
+                        isfriend = 0
+                        cnt_unknown += 1
+                    else:
+                        isfriend = 1
+                        cnt_friend += 1
+                        # logging.debug("To add: %s" % xx['NickName'])
+                    SQL = "insert into groupmember (username, nickname, isfriend) values('%s', '%s', %d)" %(
+                        xx['UserName'], xx['NickName'], isfriend )
+                    cur.execute(SQL)
+                    con.commit()
+        except Exception as e:
+            logging.exception(str(e))
+        finally:
+            con.close()
+            return [cnt_friend, cnt_unknown]
 
     def add_group_friends(self, groupname, strhello):
         if not self.chat.alive:
@@ -294,4 +313,42 @@ class wxHelper:
         con.close()
 
         return inserted
+
+    def get_mobile_from_fields(self):
+        con = sqlite3.connect(self.DBFILE)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from contacts")
+        pattern = re.compile(r'1[\d]{10}')
+
+        rec = cur.fetchone()
+        while rec:
+            m = pattern.search(rec['nickname'])
+            mobile = ""
+            if m:
+                mobile = m.group()
+                logging.info("Got %s from %s" %(rec['nickname'], mobile))
+            else:
+                m = pattern.search(rec['alias'])
+                if m:
+                    mobile = m.group()
+                    logging.info("Got %s from %s" % (rec['alias'], mobile))
+                else:
+                    m = pattern.search(rec['remark'])
+                    if m:
+                        mobile = m.group()
+                        logging.info("Got %s from %s" % (rec['remark'], mobile))
+
+            if len(mobile)>0:
+                try:
+                    con.execute(
+                        "update contacts set mobile=? where nickname=? and alias=? and remark=?",
+                        [mobile, rec['nickname'], rec['alias'], rec['remark']])
+                    con.commit()
+                except Exception as inst:
+                    logging.info(inst)
+
+            rec = cur.fetchone()
+        con.close()
+
 

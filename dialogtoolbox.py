@@ -125,7 +125,7 @@ class Ui_dialogtoolbox(object):
 
     def retranslateUi(self, dialogtoolbox):
         _translate = QtCore.QCoreApplication.translate
-        dialogtoolbox.setWindowTitle(_translate("dialogtoolbox", "群发管理"))
+        dialogtoolbox.setWindowTitle(_translate("dialogtoolbox", "客户信息管理"))
         self.label_5.setText(_translate("dialogtoolbox", "省份："))
         self.label_7.setText(_translate("dialogtoolbox", "标签："))
         self.label_4.setText(_translate("dialogtoolbox", "城市："))

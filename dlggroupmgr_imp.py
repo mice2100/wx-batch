@@ -54,8 +54,9 @@ class dlggroupmgr_imp(QDialog, Ui_dlggroupmgr):
         selected = self.twUnknown.selectedIndexes()
         for cur in selected:
             uname = self.model_unknown.record(cur.row()).field('UserName').value()
-            logging.debug("Adding friend: %s" % uname)
+            nname = self.model_unknown.record(cur.row()).field('NickName').value()
             if self.wxInst is not None:
+                logging.info("Adding friend: %s" % nname)
                 self.wxInst.add_friend(uname, verifyContent=self.edtHello.text())
             time.sleep(2)
 

@@ -9,25 +9,40 @@ from itchat.content import *
 
 if __name__ == "__main__":
 
+    logging.getLogger().setLevel(logging.DEBUG)
+
     wxInst = itchat.new_instance()
     wxHelper = wxHelper(wxInst)
 
     hotload = 'wxbatch'
     dbfile = "wechat.db"
+    monitor = False
+    fetchMobile=False
     uimode = True
 
-    opts, args = getopt.getopt(sys.argv[1:], "i:db:m:")
+    opts, args = getopt.getopt(sys.argv[1:], "i:db:m:f:u:")
     for op, value in opts:
         if op == "-i":
             hotload += value
         elif op=="-db":
             dbfile = value
         elif op=="-m":
-            uimode = False
+            monitor = (value=='Y')
+        elif op=="-f":
+            fetchMobile = (value=='Y')
+        elif op=="-u":
+            uimode = (value=='Y')
+
+    wxHelper.DBFILE = dbfile
+    if not os.path.exists(dbfile):
+        shutil.copyfile('wechat_em.db', dbfile)
+
+    if fetchMobile:
+        wxHelper.get_mobile_from_fields()
 
     wxInst.auto_login(hotReload=True, statusStorageDir=hotload)
 
-    if not uimode:
+    if monitor:
         savedir = 'temp'
         os.makedirs(savedir, exist_ok=True)
 
@@ -51,11 +66,6 @@ if __name__ == "__main__":
 
     wxInst.run(blockThread=False)
     wxInst.dump_login_status(hotload)
-
-    wxHelper.DBFILE = dbfile
-    if not os.path.exists(dbfile):
-        shutil.copyfile('wechat_em.db', dbfile)
-
     if uimode:
         app = QtWidgets.QApplication(sys.argv)
         MainWindow = mainwindow_imp(wxInst, wxHelper)
@@ -63,7 +73,7 @@ if __name__ == "__main__":
 
         MainWindow.showMaximized()
         sys.exit(app.exec_())
-    else:
+    elif monitor:
         while True:
             time.sleep(1)
             cmd = input("CMD:")

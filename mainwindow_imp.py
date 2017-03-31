@@ -5,6 +5,7 @@ from dialogsend_imp import dialogsend_imp
 from dialogtoolbox_imp import dialogtoolbox_imp
 from dlggroupmgr_imp import dlggroupmgr_imp
 from wxHelper import *
+import zipfile
 
 class mainwindow_imp(Ui_MainWindow, QMainWindow):
     def __init__(self, wxinst, wxhelper):
@@ -35,6 +36,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.actionRemoveSelected.triggered.connect(self.triggerRemoveSelected)
         self.actionQuit.triggered.connect(self.close)
         self.actionGroupMgr.triggered.connect(self.triggerGroupManager)
+        self.actionBackup.triggered.connect(self.triggerBackup)
         # self.dialogsend_imp.btnUpdateContacts.clicked.connect(self.search)
         # self.options_imp.btnSearch.clicked.connect(self.search)
         # self.btnBatchSend.clicked.connect(self.sendclicked)
@@ -48,6 +50,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.tableView.setModel(self.model)
         self.tableView.hideColumn(1)
         self.tableView.hideColumn(6)
+        self.tableView.setSortingEnabled(True)
         while self.model.canFetchMore(): self.model.fetchMore()
         self.count = self.model.rowCount()
         xx = "%d rows in total" % self.count
@@ -125,6 +128,14 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
             self.model.removeRow(i.row())
         self.btnSearchClicked()
 
+    def triggerBackup(self):
+        fname='backup-' + str(time.time()) + '.zip'
+        # con = sqlite3.connect(self.wxHelper.DBFILE)
+        # con.execute("VACUUM;")
+        # con.close()
+        with zipfile.ZipFile(fname, 'w') as zip:
+            zip.write(self.wxHelper.DBFILE)
+
     def triggerGroupManager(self):
         selected = self.tableView.currentIndex().row()
         tp = self.model.record(selected).field('tp').value()
@@ -146,7 +157,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
             nickname = record.value('nickname')
             alias = record.value('alias')
             usr = self.wxInst.search_friends(wechatAccount=alias, nickName=nickname)
-            if usr is not None:
+            if usr is not None and len(usr)>0:
                 remark = usr[0]['RemarkName']
                 if remark != record.value('remark'):
                     uid = usr[0]['UserName']

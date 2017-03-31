@@ -58,6 +58,10 @@ class Ui_MainWindow(object):
         self.actionRemoveSelected.setObjectName("actionRemoveSelected")
         self.actionQuit = QtWidgets.QAction(MainWindow)
         self.actionQuit.setObjectName("actionQuit")
+        self.actionBackup = QtWidgets.QAction(MainWindow)
+        self.actionBackup.setObjectName("actionBackup")
+        self.actionFetchMobile = QtWidgets.QAction(MainWindow)
+        self.actionFetchMobile.setObjectName("actionFetchMobile")
         self.toolBar.addAction(self.actionSend)
         self.toolBar.addSeparator()
         self.menu.addAction(self.actionStart)
@@ -72,6 +76,8 @@ class Ui_MainWindow(object):
         self.menu_2.addAction(self.actionQuit)
         self.menu_3.addAction(self.actionupdatefromwx)
         self.menu_3.addAction(self.actionRemoveSelected)
+        self.menu_3.addSeparator()
+        self.menu_3.addAction(self.actionBackup)
         self.menuBar.addAction(self.menu_2.menuAction())
         self.menuBar.addAction(self.menu.menuAction())
         self.menuBar.addAction(self.menu_3.menuAction())
@@ -81,7 +87,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "N8微信通讯录管理"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "N8微信客户关系维护系统"))
         self.lbMsg.setText(_translate("MainWindow", "TextLabel"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
         self.menu.setTitle(_translate("MainWindow", "微信操作"))
@@ -97,6 +103,8 @@ class Ui_MainWindow(object):
         self.actionupdatefromwx.setText(_translate("MainWindow", "从微信更新"))
         self.actionRemoveSelected.setText(_translate("MainWindow", "删除选中项"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
+        self.actionBackup.setText(_translate("MainWindow", "备份..."))
+        self.actionFetchMobile.setText(_translate("MainWindow", "自动提取手机号码"))
 
 
 if __name__ == "__main__":
