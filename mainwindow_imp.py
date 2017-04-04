@@ -144,7 +144,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.btnSearchClicked()
 
     def triggerBackup(self):
-        fname='backup-' + str(time.time()) + '.zip'
+        fname='backup-' + time.strftime("%Y%m%d%H%M%S") + '.zip'
         # con = sqlite3.connect(self.wxHelper.DBFILE)
         # con.execute("VACUUM;")
         # con.close()

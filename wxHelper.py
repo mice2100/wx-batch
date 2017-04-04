@@ -187,10 +187,10 @@ class wxHelper:
                     SQL = "insert into groupmember (username, nickname, isfriend) values('%s', '%s', %d)" %(
                         xx['UserName'], xx['NickName'], isfriend )
                     cur.execute(SQL)
-                    con.commit()
         except Exception as e:
             logging.exception(str(e))
         finally:
+            con.commit()
             con.close()
             return [cnt_friend, cnt_unknown]
 
