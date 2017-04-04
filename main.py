@@ -9,7 +9,9 @@ from itchat.content import *
 
 if __name__ == "__main__":
 
+    logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger("requests").setLevel(logging.WARNING)
 
     wxInst = itchat.new_instance()
     wxHelper = wxHelper(wxInst)
@@ -81,3 +83,4 @@ if __name__ == "__main__":
                 wxInst.logout()
                 logging.info("quitting....")
                 exit()
+

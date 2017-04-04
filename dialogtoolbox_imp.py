@@ -34,12 +34,8 @@ class dialogtoolbox_imp(Ui_dialogtoolbox, QDialog):
         self.txtLog.append(s)
         sb = self.txtLog.verticalScrollBar()
         sb.setValue(sb.maximum())
-        self.update()
 
     def make_cond(self):
-        # self.jobd['msg'] = self.edtMsg.toPlainText()
-        # self.jobd['prefix'] = self.cbPrefix.checkState()
-        # self.jobd['pic'] = self.edtPic.text()
         self.jobd['province'] = self.edtProv.text()
         self.jobd['city'] = self.edtCity.text()
         self.jobd['sex'] = self.edtSex.text()
@@ -51,12 +47,11 @@ class dialogtoolbox_imp(Ui_dialogtoolbox, QDialog):
     def setupUi(self):
         super(dialogtoolbox_imp, self).setupUi(self)
         self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint)
-        loghandler = MyLogHandler(self)
+        # loghandler = MyLogHandler(self)
         # loghandler.setFormatter(logging.Formatter('%(levelname)s: %(filename)s - %(message)s'))
-        loghandler.setFormatter(logging.Formatter('%(message)s'))
-        logging.getLogger("requests").setLevel(logging.WARNING)
-        logging.getLogger().addHandler(loghandler)
-        logging.getLogger().setLevel(logging.DEBUG)
+        # loghandler.setFormatter(logging.Formatter('%(message)s'))
+        # logging.getLogger().addHandler(loghandler)
+        # logging.getLogger().setLevel(logging.DEBUG)
 
         self.btnSearch.clicked.connect(self.make_cond)
 

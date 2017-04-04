@@ -63,6 +63,7 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
 
     def dofilter(self, cond):
         self.model.setFilter(cond)
+        self.model.select()
         while self.model.canFetchMore(): self.model.fetchMore()
         self.count = self.model.rowCount()
         xx = "%d rows in total" % self.count
@@ -103,18 +104,32 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.wxHelper.stop_batchsend()
 
     def triggerSend(self):
-        if self.wxHelper.jobInQueue():
-            QMessageBox.information(self, "提示", "队列中已经有任务正在发送，请确认批量发送已经启动并稍后再试", QMessageBox.Ok)
-            return
+
+        selected = self.tableView.selectedIndexes()
+        xxx = set()
+        for i in selected:
+            xxx.add(i.row())
+
+        receipts = []
+
+        for i in xxx:
+            tmp = {}
+            tmp['nickname'] = self.model.record(i).field('nickname').value()
+            tmp['alias'] = self.model.record(i).field('alias').value()
+            tmp['remark'] = self.model.record(i).field('remark').value()
+            tmp['prefix'] = self.model.record(i).field('prefix').value()
+            receipts.append(tmp)
 
         dlg = dialogsend_imp(self)
         dlg.setupUi()
-        dlg.lblCount.setText(str(self.count))
+        dlg.lblCount.setText(str(len(xxx)))
+
         dlg.exec()
         if dlg.result()==QDialog.Accepted:
-            dd = dict(dlg.jobd, **self.dialogtoolbox_imp.jobd)
-            with open(self.wxHelper.JOBFILE, 'w') as f:
-                f.write(json.dumps(dd, ensure_ascii=False))
+            # dd = dict(dlg.jobd, **self.dialogtoolbox_imp.jobd)
+            dd = dlg.jobd
+            dd['receipts'] = receipts
+            self.wxHelper.add_send_jobs(dd)
 
     def triggerUpdatefromwx(self):
         if self.wxInst.alive:
@@ -176,7 +191,3 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
 
 """DB related
 """
-
-
-
-

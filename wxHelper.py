@@ -5,7 +5,7 @@ import logging.config
 import threading
 import os
 import json, sqlite3
-import time, re
+import time, re, copy
 
 
 def make_cond_from_dict(dict):
@@ -43,99 +43,111 @@ class wxHelper:
         self.chat = wxInst
         self.sendJobs = []
         self.event_send = threading.Event()
+        self.lock_send = threading.RLock()
         self.thread_send = None
-        self.JOBFILE = 'job.txt'
         self.toaddfriends = []
         self.lock_addfriend = threading.RLock()
         self.event_add_friend = threading.Event()
         self.add_friend_cnt = 5
         self.thread_add_friend = None
         self.DBFILE = ''
-
+        self.JOBFILE='JOBS.JSON'
 
     def start_batchsend(self):
+        if os.path.exists(self.JOBFILE):
+            self.lock_send.acquire()
+            try:
+                self.sendJobs = json.load(open(self.JOBFILE))
+            except:
+                self.sendJobs = []
+                os.remove(self.JOBFILE)
+            finally:
+                self.lock_send.release()
+
         self.event_send.clear()
-        self.thread_send = threading.Thread(target=self.batchSendMode)
+        self.thread_send = threading.Thread(target=self.batchSendProc)
         self.thread_send.start()
 
-    def jobInQueue(self):
-        return os.path.exists(self.JOBFILE)
+    def add_send_jobs(self, jobs):
+        self.lock_send.acquire()
+        tmp = copy.deepcopy(jobs)
+        self.sendJobs.append(tmp)
+        self.lock_send.release()
 
-    def checkJobs(self):
-        if not self.jobInQueue():
-            return [None, None]
-
-        condition = json.load(open(self.JOBFILE))
-
-        SQL = "select nickname, prefix, alias, remark from contacts"
-
-        cond = make_cond_from_json(self.JOBFILE)
-        if len(cond)>0: SQL = SQL + ' where '+cond
-        # logging.debug(SQL)
-
-        con = sqlite3.connect(self.DBFILE)
-        cur = con.cursor()
-        cur.execute(SQL)
-
-        rows = cur.fetchall()
-        con.close()
-
-        # logging.debug("%d rows got.", len(rows))
-        os.remove(self.JOBFILE)
-
-        return [condition, rows]
-
-    def batchSendMode(self):
+    def batchSendProc(self):
         logging.info('[*] 进入群发模式 ... 成功')
-        while not self.event_send.wait(2):
-            [jobd, selector] = self.checkJobs()
-            if jobd is None: continue
-            MSG = jobd.get('msg') if jobd.get('msg') else ""
-            PIC = jobd.get('pic') if jobd.get('pic') else ""
-            PIC2 = jobd.get('pic_2') if jobd.get('pic_2') else ""
-            PIC3 = jobd.get('pic_3') if jobd.get('pic_3') else ""
-            PREFIX = jobd.get('prefix')
-            media_id = ""
-            media_id2 = ""
-            media_id3 = ""
-            # logging.debug("%s, %s", MSG, PIC)
-            import os
-            if len(PIC) > 0 and os.path.exists(PIC):
-                media = self.chat.upload_file(PIC, isPicture=True)
-                media_id = media['MediaId']
-            if len(PIC2) > 0 and os.path.exists(PIC2):
-                media = self.chat.upload_file(PIC2, isPicture=True)
-                media_id2 = media['MediaId']
-            if len(PIC3) > 0 and os.path.exists(PIC3):
-                media = self.chat.upload_file(PIC3, isPicture=True)
-                media_id3 = media['MediaId']
+        try:
+            while not self.event_send.wait(2):
+                self.lock_send.acquire()
 
-            for row in selector:
-                lastCheckTs = time.time()
-                usr = self.chat.search_friends(remarkName=row[3], nickName=row[0], wechatAccount=row[2])
-                if len(usr) == 0:
+                if len(self.sendJobs)<=0:
+                    self.lock_send.release()
                     continue
+                jobd = self.sendJobs[0]
+
+                count = len(jobd['receipts'])
+                if count<=0:
+                    self.sendJobs.pop(0)
+                    self.lock_send.release()
+                    continue
+
+                MSG = jobd['msg'] or ""
+                PIC = jobd['pic'] or ""
+                PIC2 = jobd['pic_2'] or ""
+                PIC3 = jobd['pic_3'] or ""
+                PREFIX = jobd['prefix'] or 1
+
+                # logging.debug("%s, %s", MSG, PIC)
+                import os
+                if 'media_id' not in jobd and os.path.exists(PIC):
+                    media = self.chat.upload_file(PIC, isPicture=True)
+                    jobd['media_id'] = media['MediaId']
+                if 'media_id2' not in jobd and os.path.exists(PIC2):
+                    media = self.chat.upload_file(PIC2, isPicture=True)
+                    jobd['media_id2'] = media['MediaId']
+                if 'media_id3' not in jobd and os.path.exists(PIC3):
+                    media = self.chat.upload_file(PIC3, isPicture=True)
+                    jobd['media_id3'] = media['MediaId']
+
+                row = jobd['receipts'][0]
+
+                usr = self.chat.search_friends(remarkName=row['remark'], nickName=row['nickname'], wechatAccount=row['alias'])
+                if len(usr) == 0:
+                    usr = self.chat.search_chatrooms(row['nickname'])
+                    if len(usr) == 0:
+                        jobd['receipts'].pop(0)
+                        self.lock_send.release()
+                        logging.debug("cant find user or chatroom")
+                        continue
                 uid = usr[0]['UserName']
 
                 if len(MSG) > 0:
                     msg = MSG
-                    if PREFIX >0:
-                        prefix = row[1] if row[1] is not None else ""
+                    if PREFIX >1:
+                        prefix = row['prefix'] or ""
                         msg = MSG % prefix
-                    logging.info("Sending msg: %s", msg)
+                    logging.info("Sending 1/%d msg: %s", count, msg)
                     self.chat.send_msg(msg, uid)
-                if len(media_id) > 0:
-                    logging.info("Sending image %s", PIC)
-                    self.chat.send_image(toUserName=uid, mediaId=media_id, fileDir=PIC)
-                if len(media_id2) > 0:
-                    logging.info("Sending image %s", PIC2)
-                    self.chat.send_image(toUserName=uid, mediaId=media_id2, fileDir=PIC2)
-                if len(media_id3) > 0:
-                    logging.info("Sending image %s", PIC3)
-                    self.chat.send_image(toUserName=uid, mediaId=media_id3, fileDir=PIC3)
+                if 'media_id' in jobd:
+                    logging.info("Sending 1/%d image %s", count, PIC)
+                    self.chat.send_image(toUserName=uid, mediaId=jobd['media_id'], fileDir=PIC)
+                if 'media_id2' in jobd:
+                    logging.info("Sending 1/%d image %s", count, PIC2)
+                    self.chat.send_image(toUserName=uid, mediaId=jobd['media_id2'], fileDir=PIC2)
+                if 'media_id3' in jobd:
+                    logging.info("Sending 1/%d image %s", count, PIC3)
+                    self.chat.send_image(toUserName=uid, mediaId=jobd['media_id3'], fileDir=PIC3)
 
-                if (time.time() - lastCheckTs) <= 2:
-                    time.sleep(2-time.time()+lastCheckTs)
+                jobd['receipts'].pop(0)
+                if len(self.sendJobs) > 0 and len(self.sendJobs[0]['receipts']) > 0:
+                    with open(self.JOBFILE, 'w') as f:
+                        f.write(json.dumps(self.sendJobs))
+                self.lock_send.release()
+
+        except Exception as e:
+            self.lock_send.release()
+            logging.exception(str(e))
+
         logging.info('[*] 退出群发模式 ...')
 
     def stop_batchsend(self):
@@ -226,15 +238,10 @@ class wxHelper:
                     cur.execute(SQL, param)
                     rec = cur.fetchone()
                     if rec is not None:
-                        exist = False
                         tags = []
                         if rec[0] is not None:
                             tags = rec[0].split(';')
-                            for tt in tags:
-                                if tt==tag:
-                                    exist = True
-                                    break
-                        if not exist:
+                        if tag not in tags:
                             tags.append(tag)
                             strtags = ';'.join(tags)
                             SQL = "update contacts set tags=? where nickname=? and alias=? and remark=?"
@@ -350,5 +357,4 @@ class wxHelper:
 
             rec = cur.fetchone()
         con.close()
-
 
