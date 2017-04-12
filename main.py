@@ -5,6 +5,7 @@ import shutil
 import itchat
 from wxHelper import *
 from itchat.content import *
+_VERSION_ = '2.0.1'
 
 if __name__ == "__main__":
 
@@ -13,7 +14,7 @@ if __name__ == "__main__":
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     wxInst = itchat.new_instance()
-    wxHelper = wxHelper(wxInst, 5)
+    wxHelper = wxHelper(wxInst)
 
     hotload = 'wxbatch'
     dbfile = "wechat.db"
@@ -42,6 +43,20 @@ if __name__ == "__main__":
         wxHelper.get_mobile_from_fields()
 
     wxInst.auto_login(hotReload=True, statusStorageDir=hotload)
+
+    import requests, json
+    myself = wxInst.search_friends()
+    param = {'nickname': myself['NickName']}
+    body = json.loads(requests.get('http://f1.nemoinfo.com/N8CloudServer/checkupdate.php', param).text)
+    exist = body['EXIST'] or 0
+    if exist == 0:
+        logging.info('确保使用的是最新软件，请先关注公众号：N8软件[一天后生效]。')
+        exit(1)
+    version = body['VERSION'] or "1.0.0"
+    url = body['URL'] or ''
+
+    if version > _VERSION_:
+        logging.info('发现有版本更新，请到如下地址下载: %s' % url)
 
     if monitor:
         savedir = 'temp'
@@ -82,3 +97,4 @@ if __name__ == "__main__":
                 wxInst.logout()
                 logging.info("quitting....")
                 exit()
+
