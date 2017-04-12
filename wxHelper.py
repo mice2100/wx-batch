@@ -39,7 +39,7 @@ def make_cond_from_json(fpath):
 
 
 class wxHelper:
-    def __init__(self, wxInst):
+    def __init__(self, wxInst, intval = 2):
         self.chat = wxInst
         self.sendJobs = []
         self.event_send = threading.Event()
@@ -52,6 +52,7 @@ class wxHelper:
         self.thread_add_friend = None
         self.DBFILE = ''
         self.JOBFILE='JOBS.JSON'
+        self.interval = intval
 
     def start_batchsend(self):
         if os.path.exists(self.JOBFILE):
@@ -77,7 +78,7 @@ class wxHelper:
     def batchSendProc(self):
         logging.info('[*] 进入群发模式 ... 成功')
         try:
-            while not self.event_send.wait(2):
+            while not self.event_send.wait(self.interval):
                 self.lock_send.acquire()
 
                 if len(self.sendJobs)<=0:
