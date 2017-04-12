@@ -14,7 +14,7 @@ if __name__ == "__main__":
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     wxInst = itchat.new_instance()
-    wxHelper = wxHelper(wxInst)
+    wxHelper = wxHelper(wxInst,5)
 
     hotload = 'wxbatch'
     dbfile = "wechat.db"
