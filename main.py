@@ -15,7 +15,7 @@ if __name__ == "__main__":
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     wxInst = itchat.new_instance()
-    wxHelper = wxHelper(wxInst, 5)
+    wxHelper = wxHelper(wxInst)
 
     hotload = 'wxbatch'
     dbfile = "wechat.db"
@@ -96,3 +96,4 @@ if __name__ == "__main__":
                 wxInst.logout()
                 logging.info("quitting....")
                 exit()
+
