@@ -98,18 +98,6 @@ class Ui_dialogtoolbox(object):
         self.gridLayout.addItem(spacerItem, 6, 0, 1, 1)
         self.horizontalLayout.addLayout(self.gridLayout)
         self.tabWidget.addTab(self.tab, "")
-        self.tab_2 = QtWidgets.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.tab_2)
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.txtLog = QtWidgets.QTextBrowser(self.tab_2)
-        self.txtLog.setObjectName("txtLog")
-        self.horizontalLayout_3.addWidget(self.txtLog)
-        self.horizontalLayout_4.addLayout(self.horizontalLayout_3)
-        self.tabWidget.addTab(self.tab_2, "")
         self.verticalLayout_2.addWidget(self.tabWidget)
         self.verticalLayout.addLayout(self.verticalLayout_2)
 
@@ -138,7 +126,6 @@ class Ui_dialogtoolbox(object):
         self.btnNoremark.setText(_translate("dialogtoolbox", "所有易混淆"))
         self.btnNotags.setText(_translate("dialogtoolbox", "所有无标签"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("dialogtoolbox", "通讯录管理"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("dialogtoolbox", "微信日志"))
 
 
 if __name__ == "__main__":
