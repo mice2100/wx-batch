@@ -72,7 +72,6 @@ class Ui_MainWindow(object):
         self.menu.addSeparator()
         self.menu.addAction(self.actionSend)
         self.menu.addSeparator()
-        self.menu.addAction(self.actionGroupMgr)
         self.menu_2.addAction(self.actionQuit)
         self.menu_3.addAction(self.actionupdatefromwx)
         self.menu_3.addAction(self.actionRemoveSelected)
