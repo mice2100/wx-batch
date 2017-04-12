@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
 from mainwindow import Ui_MainWindow
 from dialogsend_imp import dialogsend_imp
 from dialogtoolbox_imp import dialogtoolbox_imp
-from dlggroupmgr_imp import dlggroupmgr_imp
 from wxHelper import *
 import zipfile
 

@@ -3,7 +3,7 @@ from mainwindow_imp import mainwindow_imp
 import sys, getopt
 import shutil
 from wxHelper import *
-_VERSION_ = '2.0.1'
+_VERSION_ = '0.0.1'
 
 if __name__ == "__main__":
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     body = json.loads(requests.get('http://f1.nemoinfo.com/N8CloudServer/checkupdate.php', param).text)
     exist = body['EXIST'] or 0
     if exist == 0:
-        logging.info('确保使用的是最新软件，请先关注公众号：N8软件[一天后生效]。')
+        logging.info('为确保使用的是最新软件，请先关注公众号：N8软件[一天后生效]。')
         exit(1)
     version = body['VERSION'] or "1.0.0"
     url = body['URL'] or ''
