@@ -35,7 +35,12 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         self.actionStopBatch.triggered.connect(self.triggerBatchSendStop)
         self.actionRemoveSelected.triggered.connect(self.triggerRemoveSelected)
         self.actionQuit.triggered.connect(self.close)
+        self.actionGroupMgr.triggered.connect(self.triggerGroupManager)
         self.actionBackup.triggered.connect(self.triggerBackup)
+        # self.dialogsend_imp.btnUpdateContacts.clicked.connect(self.search)
+        # self.options_imp.btnSearch.clicked.connect(self.search)
+        # self.btnBatchSend.clicked.connect(self.sendclicked)
+        # self.options_imp.show()
         self.dialogtoolbox_imp.show()
 
         db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
@@ -145,6 +150,21 @@ class mainwindow_imp(Ui_MainWindow, QMainWindow):
         # con.close()
         with zipfile.ZipFile(fname, 'w') as zip:
             zip.write(self.wxHelper.DBFILE)
+
+    def triggerGroupManager(self):
+        selected = self.tableView.currentIndex().row()
+        tp = self.model.record(selected).field('tp').value()
+        if tp!= 1: return
+        groupname = self.model.record(selected).field('NickName').value()
+        [cnt_friend, cnt_unknown] = self.wxHelper.get_group_members_into_memdb(groupname)
+        dlg = dlggroupmgr_imp(self)
+        dlg.cnt_friend = cnt_friend
+        dlg.cnt_unknown = cnt_unknown
+        dlg.groupname = groupname
+        dlg.setupUi()
+        dlg.wxInst = self.wxInst
+        dlg.wxHelper = self.wxHelper
+        dlg.exec()
 
     def before_update(self, row, record):
         if self.wxInst.alive:

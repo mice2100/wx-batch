@@ -68,6 +68,7 @@
     <addaction name="separator"/>
     <addaction name="actionSend"/>
     <addaction name="separator"/>
+    <addaction name="actionGroupMgr"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -139,6 +140,11 @@
   <action name="actionBackup">
    <property name="text">
     <string>备份...</string>
+   </property>
+  </action>
+  <action name="actionFetchMobile">
+   <property name="text">
+    <string>自动提取手机号码</string>
    </property>
   </action>
  </widget>
