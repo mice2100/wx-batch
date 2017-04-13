@@ -18,9 +18,9 @@ if __name__ == "__main__":
     monitor = False
     fetchMobile=False
     uimode = True
-    interval = 5
+    interval = 3
 
-    opts, args = getopt.getopt(sys.argv[1:], "i:db:m:f:u:")
+    opts, args = getopt.getopt(sys.argv[1:], "i:h:db:m:f:u:")
     for op, value in opts:
         if op == "-h":
             hotload += value
