@@ -13,19 +13,19 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
     logging.getLogger("requests").setLevel(logging.WARNING)
 
-    wxInst = itchat.new_instance()
-    wxHelper = wxHelper(wxInst,5)
-
     hotload = 'wxbatch'
     dbfile = "wechat.db"
     monitor = False
     fetchMobile=False
     uimode = True
+    interval = 5
 
     opts, args = getopt.getopt(sys.argv[1:], "i:db:m:f:u:")
     for op, value in opts:
-        if op == "-i":
+        if op == "-h":
             hotload += value
+        elif op == "-i":
+            interval = int(value)
         elif op=="-db":
             dbfile = value
         elif op=="-m":
@@ -34,6 +34,9 @@ if __name__ == "__main__":
             fetchMobile = (value=='Y')
         elif op=="-u":
             uimode = (value=='Y')
+
+    wxInst = itchat.new_instance()
+    wxHelper = wxHelper(wxInst,interval)
 
     wxHelper.DBFILE = dbfile
     if not os.path.exists(dbfile):

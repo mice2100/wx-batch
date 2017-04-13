@@ -100,13 +100,13 @@ class wxHelper:
 
                 # logging.debug("%s, %s", MSG, PIC)
                 import os
-                if 'media_id' not in jobd and os.path.exists(PIC):
+                if os.path.exists(PIC):
                     media = self.chat.upload_file(PIC, isPicture=True)
                     jobd['media_id'] = media['MediaId']
-                if 'media_id2' not in jobd and os.path.exists(PIC2):
+                if os.path.exists(PIC2):
                     media = self.chat.upload_file(PIC2, isPicture=True)
                     jobd['media_id2'] = media['MediaId']
-                if 'media_id3' not in jobd and os.path.exists(PIC3):
+                if os.path.exists(PIC3):
                     media = self.chat.upload_file(PIC3, isPicture=True)
                     jobd['media_id3'] = media['MediaId']
 
@@ -129,15 +129,19 @@ class wxHelper:
                         msg = MSG % prefix
                     logging.info("Sending 1/%d msg: %s", count, msg)
                     self.chat.send_msg(msg, uid)
+                    time.sleep(0.5)
                 if 'media_id' in jobd:
                     logging.info("Sending 1/%d image %s", count, PIC)
                     self.chat.send_image(toUserName=uid, mediaId=jobd['media_id'], fileDir=PIC)
+                    time.sleep(0.5)
                 if 'media_id2' in jobd:
                     logging.info("Sending 1/%d image %s", count, PIC2)
                     self.chat.send_image(toUserName=uid, mediaId=jobd['media_id2'], fileDir=PIC2)
+                    time.sleep(0.5)
                 if 'media_id3' in jobd:
                     logging.info("Sending 1/%d image %s", count, PIC3)
                     self.chat.send_image(toUserName=uid, mediaId=jobd['media_id3'], fileDir=PIC3)
+                    time.sleep(0.5)
 
                 jobd['receipts'].pop(0)
                 if len(self.sendJobs) > 0 and len(self.sendJobs[0]['receipts']) > 0:
